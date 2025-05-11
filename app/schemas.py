@@ -36,7 +36,7 @@ class UserInDB(UserBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # Changed from orm_mode
 
 
 class User(UserInDB):
@@ -111,7 +111,7 @@ class SubmissionInDB(SubmissionBase):
     admin_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # Changed from orm_mode
 
 
 class Submission(SubmissionInDB):

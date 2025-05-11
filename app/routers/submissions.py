@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..database import get_db
@@ -6,11 +6,7 @@ from ..models import Submission, User, RoleType
 from ..schemas import Submission as SubmissionSchema, SubmissionCreate
 from ..dependencies import get_current_admin
 from ..storage import file_storage
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 import json
-
-limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(
     prefix="/submissions",
@@ -19,8 +15,8 @@ router = APIRouter(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-@limiter.limit("10/minute")
 async def create_submission(
+    request: Request,
     first_name: str = Form(...),
     last_name: str = Form(...),
     cin: str = Form(...),
@@ -31,6 +27,7 @@ async def create_submission(
     cin_file: UploadFile = File(...),
     picture_file: UploadFile = File(...),
     grey_card_file: UploadFile = File(...),
+    current_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     # Create submission data
@@ -69,7 +66,8 @@ async def create_submission(
         **submission_data,
         cin_file_path=cin_path,
         picture_file_path=picture_path,
-        grey_card_file_path=grey_card_path
+        grey_card_file_path=grey_card_path,
+        admin_id=current_user.id  # Set the admin ID
     )
     
     db.add(db_submission)
@@ -81,6 +79,7 @@ async def create_submission(
 
 @router.get("/", response_model=List[SubmissionSchema])
 async def read_submissions(
+    request: Request,
     skip: int = 0,
     limit: int = 100,
     plant: Optional[str] = None,
@@ -102,6 +101,7 @@ async def read_submissions(
 
 @router.get("/{submission_id}", response_model=SubmissionSchema)
 async def read_submission(
+    request: Request,
     submission_id: int,
     current_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db)

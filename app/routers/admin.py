@@ -10,6 +10,7 @@ from ..dependencies import get_super_admin, get_current_admin
 from ..security import get_password_hash
 from ..reports import report_generator
 
+
 router = APIRouter(
     prefix="/admin",
     tags=["admin"],

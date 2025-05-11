@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
@@ -16,11 +16,6 @@ from ..security import (
 )
 from ..config import settings
 
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
-
 router = APIRouter(
     prefix="/auth",
     tags=["authentication"],
@@ -29,8 +24,8 @@ router = APIRouter(
 
 
 @router.post("/login", response_model=Token)
-@limiter.limit("5/minute")
 async def login_for_access_token(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ) -> Any:
@@ -52,8 +47,8 @@ async def login_for_access_token(
 
 
 @router.post("/reset-password", response_model=UserSchema)
-@limiter.limit("3/minute")
 async def reset_password(
+    request: Request,
     password_data: PasswordReset,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)

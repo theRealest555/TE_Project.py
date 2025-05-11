@@ -7,6 +7,23 @@ from .config import settings
 import uuid
 
 
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+async def save_file(self, file: UploadFile, plant_name: str, file_type: str) -> str:
+    # Check file size
+    file_size = 0
+    content = await file.read()
+    file_size = len(content)
+    await file.seek(0)
+    
+    if file_size > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large")
+    
+    # Validate content type
+    allowed_types = ["image/jpeg", "image/png"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type")
+    
 class FileValidator:
     @staticmethod
     def validate_cin_filename(filename: str) -> bool:
