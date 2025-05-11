@@ -57,7 +57,10 @@ class UserInfo(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
-    user: Optional[UserInfo] = None
+    user: UserInfo
+
+class Config:
+    from_attributes = True 
 
 
 class TokenData(BaseModel):
@@ -134,9 +137,6 @@ class SubmissionInDB(SubmissionBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     admin_id: int
-
-    class Config:
-        from_attributes = True  # Changed from orm_mode
 
 
 class Submission(SubmissionInDB):
