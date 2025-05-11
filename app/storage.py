@@ -9,21 +9,6 @@ import uuid
 
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
-async def save_file(self, file: UploadFile, plant_name: str, file_type: str) -> str:
-    # Check file size
-    file_size = 0
-    content = await file.read()
-    file_size = len(content)
-    await file.seek(0)
-    
-    if file_size > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="File too large")
-    
-    # Validate content type
-    allowed_types = ["image/jpeg", "image/png"]
-    if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail="Invalid file type")
-    
 class FileValidator:
     @staticmethod
     def validate_cin_filename(filename: str) -> bool:
@@ -69,7 +54,20 @@ class FileStorage:
 
     async def save_file(self, file: UploadFile, plant_name: str, file_type: str) -> str:
         """Save a file to the appropriate location and return the path."""
-        # Validate file type
+        # Check file size
+        content = await file.read()
+        file_size = len(content)
+        await file.seek(0)
+        
+        if file_size > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail="File too large")
+        
+        # Validate content type
+        allowed_types = ["image/jpeg", "image/png"]
+        if file.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG and PNG are supported.")
+        
+        # File naming validation based on type
         if file_type == "cin" and not FileValidator.validate_cin_filename(file.filename):
             raise HTTPException(status_code=400, detail="Invalid CIN filename format")
         elif file_type == "pic" and not FileValidator.validate_picture_filename(file.filename):
@@ -87,7 +85,6 @@ class FileStorage:
         
         # Save the file
         async with aiofiles.open(file_path, 'wb') as out_file:
-            content = await file.read()
             await out_file.write(content)
         
         # Return the relative path from the base uploads directory

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 import re
 from .models import RoleType
@@ -43,10 +43,21 @@ class User(UserInDB):
     pass
 
 
+# User response with basic info
+class UserInfo(BaseModel):
+    id: int
+    username: str
+    email: EmailStr
+    full_name: str
+    role: RoleType
+    must_reset_password: bool
+
+
 # Auth schemas
 class Token(BaseModel):
     access_token: str
     token_type: str
+    user: Optional[UserInfo] = None
 
 
 class TokenData(BaseModel):
@@ -72,6 +83,20 @@ class PasswordReset(BaseModel):
         if not any(char.isupper() for char in v):
             raise ValueError('Password must contain at least one uppercase letter')
         return v
+
+
+# Response schemas
+class ResponseBase(BaseModel):
+    status: str
+    message: Optional[str] = None
+
+
+class UserResponse(ResponseBase):
+    user: User
+
+
+class TokenResponse(ResponseBase):
+    token: Token
 
 
 # Submission schemas
@@ -116,6 +141,11 @@ class SubmissionInDB(SubmissionBase):
 
 class Submission(SubmissionInDB):
     pass
+
+
+class SubmissionResponse(ResponseBase):
+    submission: Optional[Submission] = None
+    submissions: Optional[List[Submission]] = None
 
 
 # Report schemas

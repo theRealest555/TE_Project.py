@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from fastapi.responses import StreamingResponse
 
 from ..database import get_db
@@ -17,12 +17,12 @@ router = APIRouter(
 )
 
 
-@router.post("/users", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/users", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_create: UserCreate,
     current_user: User = Depends(get_super_admin),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     # Check if username or email already exists
     db_user = db.query(User).filter(
         (User.username == user_create.username) | 
@@ -56,42 +56,69 @@ async def create_user(
     db.commit()
     db.refresh(db_user)
     
-    return db_user
+    return {
+        "status": "success",
+        "message": "User created successfully",
+        "user": {
+            "id": db_user.id,
+            "username": db_user.username,
+            "email": db_user.email,
+            "full_name": db_user.full_name,
+            "te_id": db_user.te_id,
+            "plant": db_user.plant,
+            "role": db_user.role
+        }
+    }
 
 
-@router.get("/users", response_model=List[UserSchema])
+@router.get("/users", response_model=Dict[str, Any])
 async def read_users(
     skip: int = 0,
     limit: int = 100,
     current_user: User = Depends(get_super_admin),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
+    # Get total count for pagination
+    total_count = db.query(User).count()
+    
+    # Apply pagination
     users = db.query(User).offset(skip).limit(limit).all()
-    return users
+    
+    return {
+        "status": "success",
+        "total": total_count,
+        "skip": skip,
+        "limit": limit,
+        "users": users
+    }
 
 
-@router.get("/users/{user_id}", response_model=UserSchema)
+@router.get("/users/{user_id}", response_model=Dict[str, Any])
 async def read_user(
     user_id: int,
     current_user: User = Depends(get_super_admin),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    return db_user
+    
+    return {
+        "status": "success",
+        "user": db_user
+    }
 
 
-@router.put("/users/{user_id}", response_model=UserSchema)
+@router.put("/users/{user_id}", response_model=Dict[str, Any])
 async def update_user(
     user_id: int,
     user_update: UserUpdate,
     current_user: User = Depends(get_super_admin),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(
@@ -107,15 +134,19 @@ async def update_user(
     db.commit()
     db.refresh(db_user)
     
-    return db_user
+    return {
+        "status": "success",
+        "message": "User updated successfully",
+        "user": db_user
+    }
 
 
-@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/users/{user_id}", status_code=status.HTTP_200_OK)
 async def delete_user(
     user_id: int,
     current_user: User = Depends(get_super_admin),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(
@@ -133,7 +164,10 @@ async def delete_user(
     db.delete(db_user)
     db.commit()
     
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return {
+        "status": "success",
+        "message": f"User {db_user.username} deleted successfully"
+    }
 
 
 @router.get("/reports")

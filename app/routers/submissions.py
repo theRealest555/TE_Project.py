@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from ..database import get_db
 from ..models import Submission, User, RoleType
 from ..schemas import Submission as SubmissionSchema, SubmissionCreate
@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=Dict[str, Any])
 async def create_submission(
     request: Request,
     first_name: str = Form(...),
@@ -29,7 +29,7 @@ async def create_submission(
     grey_card_file: UploadFile = File(...),
     current_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     # Create submission data
     submission_data = {
         "first_name": first_name,
@@ -74,10 +74,23 @@ async def create_submission(
     db.commit()
     db.refresh(db_submission)
     
-    return {"id": db_submission.id, "message": "Submission created successfully"}
+    # Return more comprehensive response
+    return {
+        "status": "success",
+        "message": "Submission created successfully",
+        "submission": {
+            "id": db_submission.id,
+            "first_name": db_submission.first_name,
+            "last_name": db_submission.last_name,
+            "cin": db_submission.cin,
+            "te_id": db_submission.te_id,
+            "plant": db_submission.plant,
+            "created_at": db_submission.created_at
+        }
+    }
 
 
-@router.get("/", response_model=List[SubmissionSchema])
+@router.get("/", response_model=Dict[str, Any])
 async def read_submissions(
     request: Request,
     skip: int = 0,
@@ -85,7 +98,7 @@ async def read_submissions(
     plant: Optional[str] = None,
     current_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     query = db.query(Submission)
     
     # Filter by plant if user is regular admin
@@ -95,17 +108,29 @@ async def read_submissions(
     elif plant:
         query = query.filter(Submission.plant == plant)
     
+    # Get total count for pagination
+    total_count = query.count()
+    
+    # Apply pagination
     submissions = query.offset(skip).limit(limit).all()
-    return submissions
+    
+    # Return enhanced response with pagination info
+    return {
+        "status": "success",
+        "total": total_count,
+        "skip": skip,
+        "limit": limit,
+        "submissions": submissions
+    }
 
 
-@router.get("/{submission_id}", response_model=SubmissionSchema)
+@router.get("/{submission_id}", response_model=Dict[str, Any])
 async def read_submission(
     request: Request,
     submission_id: int,
     current_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     submission = db.query(Submission).filter(Submission.id == submission_id).first()
     if not submission:
         raise HTTPException(
@@ -120,4 +145,7 @@ async def read_submission(
             detail="Not authorized to access this submission"
         )
     
-    return submission
+    return {
+        "status": "success",
+        "submission": submission
+    }
