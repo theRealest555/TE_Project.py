@@ -141,3 +141,53 @@ def test_unauthorized_report_access(client):
     
     assert response.status_code == 401
     assert response.json()["detail"] == "Not authenticated"
+
+
+def test_report_with_no_data(client, super_admin_user, db):
+    # Create access token for super admin
+    access_token = create_access_token(data={"sub": super_admin_user.username})
+    
+    # Generate report format 1 with no data in database
+    response = client.get(
+        "/admin/reports?format=1",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    
+    assert response.status_code == 200
+    assert response.headers["Content-Type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert "Content-Disposition" in response.headers
+    assert "attachment; filename=employee_data_format1_" in response.headers["Content-Disposition"]
+
+
+def test_report_with_plant_filter(client, super_admin_user, db):
+    # Create submissions for different plants
+    submission1 = Submission(
+        first_name="John",
+        last_name="Doe",
+        cin="A12345",
+        te_id="JD001",
+        date_of_birth=datetime(1990, 1, 1),
+        grey_card_number="123-A-456",
+        plant="Plant1",
+        cin_file_path="Plant1/cin/1/file1.jpg",
+        picture_file_path="Plant1/pic/1/file1.jpg",
+        grey_card_file_path="Plant1/grey_card/1/file1.jpg",
+        admin_id=super_admin_user.id
+    )
+    
+    db.add(submission1)
+    db.commit()
+    
+    # Create access token for super admin
+    access_token = create_access_token(data={"sub": super_admin_user.username})
+    
+    # Generate report format 1 with plant filter
+    response = client.get(
+        "/admin/reports?format=1&plant=Plant1",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    
+    assert response.status_code == 200
+    assert response.headers["Content-Type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert "Content-Disposition" in response.headers
+    assert "attachment; filename=employee_data_format1_" in response.headers["Content-Disposition"]
