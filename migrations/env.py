@@ -1,8 +1,6 @@
 from logging.config import fileConfig
-import urllib.parse
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from urllib.parse import quote_plus
 
 from alembic import context
 
@@ -29,10 +27,10 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-# Parse the DATABASE_URL and properly encode components
+# Get the URL from settings
 db_url = settings.DATABASE_URL
 
-# Set the properly encoded URL in the config
+# Set the URL in Alembic config
 config.set_main_option("sqlalchemy.url", db_url)
 
 
@@ -67,11 +65,13 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    # Create a configuration with connect_args for client_encoding
     configuration = config.get_section(config.config_ini_section)
     if not configuration:
         configuration = {}
-    configuration["connect_args"] = {"client_encoding": "utf8"}
+
+    # Add connect_args for SQLite if needed
+    if db_url.startswith("sqlite"):
+        configuration["connect_args"] = {"check_same_thread": False}
 
     connectable = engine_from_config(
         configuration,

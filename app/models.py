@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Enum, Text
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -19,12 +19,12 @@ class User(Base):
     full_name = Column(String)
     hashed_password = Column(String)
     te_id = Column(String, unique=True, index=True)
-    role = Column(Enum(RoleType), default=RoleType.REGULAR_ADMIN)
+    role = Column(String, default=RoleType.REGULAR_ADMIN)  # SQLite doesn't support ENUM directly
     plant = Column(String)
     must_reset_password = Column(Boolean, default=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
 
     submissions = relationship("Submission", back_populates="admin")
 
@@ -43,8 +43,8 @@ class Submission(Base):
     cin_file_path = Column(String)
     picture_file_path = Column(String)
     grey_card_file_path = Column(String)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
     admin_id = Column(Integer, ForeignKey("users.id"))
     
     admin = relationship("User", back_populates="submissions")

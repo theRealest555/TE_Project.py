@@ -7,7 +7,7 @@ Create Date: 2023-11-01 12:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+
 
 # revision identifiers, used by Alembic.
 revision = '1a2b3c4d5e6f'
@@ -17,10 +17,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create enum type for role
-    role_type = postgresql.ENUM('super_admin', 'regular_admin', name='roletype')
-    role_type.create(op.get_bind())
-    
     # Create users table
     op.create_table('users',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -29,12 +25,12 @@ def upgrade() -> None:
         sa.Column('full_name', sa.String(), nullable=True),
         sa.Column('hashed_password', sa.String(), nullable=True),
         sa.Column('te_id', sa.String(), nullable=True),
-        sa.Column('role', sa.Enum('super_admin', 'regular_admin', name='roletype'), nullable=True),
+        sa.Column('role', sa.String(), nullable=True),  # SQLite doesn't support ENUM
         sa.Column('plant', sa.String(), nullable=True),
-        sa.Column('must_reset_password', sa.Boolean(), nullable=True),
-        sa.Column('is_active', sa.Boolean(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+        sa.Column('must_reset_password', sa.Boolean(), nullable=True, default=True),
+        sa.Column('is_active', sa.Boolean(), nullable=True, default=True),
+        sa.Column('created_at', sa.DateTime(), nullable=True, default=sa.func.now()),
+        sa.Column('updated_at', sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
@@ -55,8 +51,8 @@ def upgrade() -> None:
         sa.Column('cin_file_path', sa.String(), nullable=True),
         sa.Column('picture_file_path', sa.String(), nullable=True),
         sa.Column('grey_card_file_path', sa.String(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=True, default=sa.func.now()),
+        sa.Column('updated_at', sa.DateTime(), nullable=True),
         sa.Column('admin_id', sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(['admin_id'], ['users.id'], ),
         sa.PrimaryKeyConstraint('id')
@@ -82,6 +78,3 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_users_id'), table_name='users')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
-    
-    # Drop enum type
-    sa.Enum(name='roletype').drop(op.get_bind(), checkfirst=False)
