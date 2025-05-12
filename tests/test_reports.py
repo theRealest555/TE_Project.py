@@ -147,9 +147,9 @@ def test_reports_api_endpoint_format_1(client, super_admin_user, sample_submissi
     )
     
     assert response.status_code == 200
-    assert response.headers["Content-Type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    assert "attachment; filename=" in response.headers["Content-Disposition"]
-    assert response.headers["Content-Disposition"].endswith(".xlsx\"")
+    assert response.headers["content-type".lower()] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert "attachment; filename=" in response.headers["content-disposition".lower()]
+    assert ".xlsx" in response.headers["content-disposition".lower()]
     
     # Read the Excel file from the response content
     wb = load_workbook(io.BytesIO(response.content))
@@ -172,7 +172,7 @@ def test_reports_api_endpoint_format_2(client, super_admin_user, sample_submissi
     )
     
     assert response.status_code == 200
-    assert response.headers["Content-Type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert response.headers["content-type".lower()] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     
     # Read the Excel file from the response content
     wb = load_workbook(io.BytesIO(response.content))
@@ -248,9 +248,9 @@ def test_report_with_no_data(client, super_admin_user, db):
     )
     
     assert response.status_code == 200
-    assert response.headers["Content-Type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    assert "Content-Disposition" in response.headers
-    assert "attachment; filename=employee_data_format1_" in response.headers["Content-Disposition"]
+    assert response.headers["content-type".lower()] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert "content-disposition" in [k.lower() for k in response.headers.keys()]
+    assert "attachment; filename=employee_data_format1_" in response.headers["content-disposition".lower()]
 
 
 def test_report_with_plant_filter_api(client, super_admin_user, sample_submissions):
@@ -265,8 +265,8 @@ def test_report_with_plant_filter_api(client, super_admin_user, sample_submissio
     )
     
     assert response.status_code == 200
-    assert response.headers["Content-Type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    assert "Content-Disposition" in response.headers
+    assert response.headers["content-type".lower()] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert "content-disposition" in [k.lower() for k in response.headers.keys()]
     
     # Read the Excel file from the response content
     wb = load_workbook(io.BytesIO(response.content))

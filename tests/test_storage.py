@@ -106,11 +106,16 @@ class TestFileStorage:
         
         # Mock UUID to have deterministic output
         mock_uuid = "1234567890abcdef1234567890abcdef"
-        with patch("uuid.uuid4", return_value=MagicMock(hex=mock_uuid)):
-            # Call save_file
-            plant_name = "test_plant"
-            file_type = "cin"
-            file_path = await self.file_storage.save_file(mock_file, plant_name, file_type)
+        # Mock aiofiles.open to avoid actual file operations
+        mock_open = AsyncMock()
+        mock_context = AsyncMock()
+        mock_open.__aenter__.return_value = mock_context
+        with patch("aiofiles.open", return_value=mock_open):
+            with patch("uuid.uuid4", return_value=MagicMock(hex=mock_uuid)):
+                # Call save_file
+                plant_name = "test_plant"
+                file_type = "cin"
+                file_path = await self.file_storage.save_file(mock_file, plant_name, file_type)
         
         # Check the returned path is correct
         expected_path = f"{plant_name}/{file_type}/1/{mock_uuid}.jpg"
@@ -120,6 +125,7 @@ class TestFileStorage:
         # We're mocking aiofiles, so we can't check the actual file content
         mock_file.read.assert_called_once()
         mock_file.seek.assert_called_once_with(0)
+        mock_context.write.assert_called_once_with(content)
 
     @pytest.mark.asyncio
     async def test_save_file_file_too_large(self):

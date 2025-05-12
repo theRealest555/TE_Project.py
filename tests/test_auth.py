@@ -14,7 +14,7 @@ def test_login_successful(client, regular_admin_user):
     assert "access_token" in data
     assert data["token_type"] == "bearer"
     assert data["user"]["username"] == regular_admin_user.username
-    assert data["user"]["role"] == regular_admin_user.role
+    assert data["user"]["role"] == regular_admin_user.role.value
 
 
 def test_login_form_data(client, regular_admin_user):
@@ -128,7 +128,7 @@ def test_get_current_user(client, regular_admin_token, regular_admin_user):
     assert data["status"] == "success"
     assert data["user"]["username"] == regular_admin_user.username
     assert data["user"]["email"] == regular_admin_user.email
-    assert data["user"]["role"] == regular_admin_user.role
+    assert data["user"]["role"] == regular_admin_user.role.value
 
 
 def test_get_current_user_invalid_token(client):

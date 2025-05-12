@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 import re
@@ -16,7 +16,7 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str = None  # Will be set to te_id by default
+    password: str = None
 
 
 class UserUpdate(BaseModel):
@@ -35,15 +35,15 @@ class UserInDB(UserBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True  # Changed from orm_mode
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class User(UserInDB):
     pass
 
 
-# User response with basic info
 class UserInfo(BaseModel):
     id: int
     username: str
@@ -53,14 +53,14 @@ class UserInfo(BaseModel):
     must_reset_password: bool
 
 
-# Auth schemas
 class Token(BaseModel):
     access_token: str
     token_type: str
     user: UserInfo
 
-class Config:
-    from_attributes = True 
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class TokenData(BaseModel):
@@ -77,7 +77,8 @@ class PasswordReset(BaseModel):
     current_password: str
     new_password: str
 
-    @validator('new_password')
+    @field_validator('new_password')
+    @classmethod
     def password_strength(cls, v):
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters')
@@ -102,7 +103,6 @@ class TokenResponse(ResponseBase):
     token: Token
 
 
-# Submission schemas
 class SubmissionBase(BaseModel):
     first_name: str
     last_name: str
@@ -112,13 +112,15 @@ class SubmissionBase(BaseModel):
     grey_card_number: str
     plant: str
 
-    @validator('cin')
+    @field_validator('cin')
+    @classmethod
     def validate_cin(cls, v):
         if not re.match(r'^[A-Za-z]{1,2}[0-9]+$', v):
             raise ValueError('Invalid CIN format')
         return v
 
-    @validator('grey_card_number')
+    @field_validator('grey_card_number')
+    @classmethod
     def validate_grey_card(cls, v):
         if not re.match(r'^[0-9]+-[A-Za-z]-[0-9]+$', v):
             raise ValueError('Invalid Grey Card format')
@@ -137,6 +139,10 @@ class SubmissionInDB(SubmissionBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     admin_id: int
+    
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class Submission(SubmissionInDB):
@@ -148,6 +154,5 @@ class SubmissionResponse(ResponseBase):
     submissions: Optional[List[Submission]] = None
 
 
-# Report schemas
 class ReportFormat(BaseModel):
     format: int = Field(..., ge=1, le=2)

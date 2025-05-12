@@ -45,21 +45,21 @@ def test_db():
 
 
 @pytest.fixture(scope="function")
-def db_session(test_db):
+def db_session(test_db) -> TestingSessionLocal:
     """
     Create a fresh database session for a test.
     We need this to ensure data is cleaned up between tests.
     """
     connection = engine.connect()
     transaction = connection.begin()
-    session = TestingSessionLocal(bind=connection)
+    session = TestingSessionLocal()
     
     # Setup seed data if needed here
     
     yield session
     
-    session.close()
     transaction.rollback()
+    session.close()
     connection.close()
 
 

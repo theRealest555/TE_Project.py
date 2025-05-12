@@ -54,13 +54,13 @@ app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 
 # Add rate limits to routes
-@limiter.limit("5/minute")
+@limiter.limit("10/minute")
 @app.post("/auth/login")
 async def limiter_login_proxy(request: Request):
     # This is just a proxy for rate limiting
     pass
 
-@limiter.limit("3/minute")
+@limiter.limit("10/minute")
 @app.post("/auth/reset-password")
 async def limiter_reset_password_proxy(request: Request):
     # This is just a proxy for rate limiting

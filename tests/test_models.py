@@ -222,6 +222,6 @@ def test_user_role_enum(db):
     
     # Verify role values
     assert super_admin.role == RoleType.SUPER_ADMIN
-    assert super_admin.role == "super_admin"
+    assert super_admin.role.value == "super_admin"
     assert regular_admin.role == RoleType.REGULAR_ADMIN
-    assert regular_admin.role == "regular_admin"
+    assert regular_admin.role.value == "regular_admin"

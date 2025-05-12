@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import validator
+from pydantic import field_validator
 from typing import Optional
 import os
 from pathlib import Path
@@ -21,16 +21,18 @@ class Settings(BaseSettings):
     UPLOADS_DIR: str = "uploads"
     MAX_FILES_PER_FOLDER: int = 100
     
-    @validator("UPLOADS_DIR")
+    @field_validator("UPLOADS_DIR")
+    @classmethod
     def validate_uploads_dir(cls, v):
         path = Path(v)
         if not path.exists():
             path.mkdir(parents=True)
         return v
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": True
+    }
 
 
 settings = Settings()

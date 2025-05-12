@@ -10,7 +10,7 @@ def test_create_user(client, super_admin_token, db_session):
         "full_name": "New User",
         "te_id": "NU12345",
         "plant": "Plant B",
-        "role": RoleType.REGULAR_ADMIN,
+        "role": RoleType.REGULAR_ADMIN.value,
         "password": "Password123"
     }
     
@@ -41,7 +41,7 @@ def test_create_user_default_password(client, super_admin_token, db_session):
         "full_name": "Default Password",
         "te_id": "DP12345",
         "plant": "Plant C",
-        "role": RoleType.REGULAR_ADMIN
+        "role": RoleType.REGULAR_ADMIN.value
         # No password provided, should default to te_id
     }
     
@@ -71,7 +71,7 @@ def test_create_user_existing_username(client, super_admin_token, regular_admin_
         "full_name": "Duplicate User",
         "te_id": "DU12345",
         "plant": "Plant D",
-        "role": RoleType.REGULAR_ADMIN
+        "role": RoleType.REGULAR_ADMIN.value
     }
     
     response = client.post(
@@ -92,7 +92,7 @@ def test_create_user_unauthorized(client, regular_admin_token):
         "full_name": "Unauthorized User",
         "te_id": "UN12345",
         "plant": "Plant E",
-        "role": RoleType.REGULAR_ADMIN
+        "role": RoleType.REGULAR_ADMIN.value
     }
     
     response = client.post(
@@ -130,7 +130,7 @@ def test_get_users_pagination(client, super_admin_token, db_session):
             hashed_password="dummy_hash",
             te_id=f"PU{i}",
             plant="Plant A",
-            role=RoleType.REGULAR_ADMIN
+            role=RoleType.REGULAR_ADMIN.value
         ))
     db_session.commit()
     
@@ -208,7 +208,7 @@ def test_delete_user(client, super_admin_token, db_session):
         hashed_password="dummy_hash",
         te_id="DU99999",
         plant="Plant Z",
-        role=RoleType.REGULAR_ADMIN
+        role=RoleType.REGULAR_ADMIN.value
     )
     db_session.add(user_to_delete)
     db_session.commit()

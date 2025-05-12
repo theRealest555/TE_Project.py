@@ -134,5 +134,5 @@ def test_token_data_extraction(db, regular_admin_user):
     
     # Verify payload contents
     assert payload["sub"] == regular_admin_user.username
-    assert payload["role"] == regular_admin_user.role
+    assert payload["role"] == regular_admin_user.role.value
     assert "exp" in payload

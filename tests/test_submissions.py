@@ -33,7 +33,11 @@ def sample_submission_data():
 def mock_save_file():
     """Mock the file_storage.save_file method"""
     with patch('app.storage.FileStorage.save_file') as mock:
-        mock.return_value = "test/path/to/file.jpg"
+        mock.side_effect = [
+            "test/path/to/cin_file.jpg",
+            "test/path/to/picture_file.jpg",
+            "test/path/to/grey_card_file.jpg"
+        ]
         yield mock
 
 
@@ -44,9 +48,9 @@ def test_create_submission(client, regular_admin_user, sample_submission_data, m
     
     # Create a new submission
     files = {
-        "cin_file": ("AB123456.jpg", mock_file, "image/jpeg"),
-        "picture_file": ("AB123456_i.jpg", mock_file, "image/jpeg"),
-        "grey_card_file": ("12345-A-67890.jpg", mock_file, "image/jpeg")
+        "cin_file": ("AB123456.jpg", io.BytesIO(b"test file content"), "image/jpeg"),
+        "picture_file": ("AB123456_i.jpg", io.BytesIO(b"test file content"), "image/jpeg"),
+        "grey_card_file": ("12345-A-67890.jpg", io.BytesIO(b"test file content"), "image/jpeg")
     }
     
     response = client.post(
